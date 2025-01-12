@@ -1,0 +1,24 @@
+# Ignore editor-specific folders
+.vscode/
+
+# Ignore Go dependencies (if not vendored)
+go.sum
+
+# Ignore build artifacts
+*.exe
+*.o
+*.out
+
+# Ignore C++ build system files
+*.obj
+*.log
+
+# Ignore test binaries
+test_stockfish.exe
+test.exe
+
+# Ignore temporary or backup files
+*.tmp
+*.bak
+*.swp
+*.swo
