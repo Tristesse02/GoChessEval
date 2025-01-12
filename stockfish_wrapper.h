@@ -2,10 +2,11 @@
 #define STOCKFISH_WRAPPER_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-const char* evaluate_position(const char* fen);
+	const char *evaluate_position(const char *fen);
 
 #ifdef __cplusplus
 }

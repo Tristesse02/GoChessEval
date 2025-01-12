@@ -22,3 +22,13 @@ test.exe
 *.bak
 *.swp
 *.swo
+
+# Ignore Dynamic Link Libraries
+*.dll
+
+# Ignore testing files
+test.go
+test.cpp
+
+# Ignore VS Code workspace settings
+c_cpp_properties.json

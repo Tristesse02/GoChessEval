@@ -1,13 +1,14 @@
-/*
-#cgo CXXFLAGS: -std=c++11
-#cgo LDFLAGS: -lstdc++
-#include <stdlib.h>
-#include "stockfish_wrapper.h"
-*/
 package main
 
+/*
+#cgo CXXFLAGS: -std=c++11 -I.
+#cgo LDFLAGS: -L. -lstockfish_wrapper -lstdc++
+#include "stockfish_wrapper.h"
+#include <stdlib.h>
+*/
+import "C"
+
 import (
-	"C"
 	"encoding/json"
 	"fmt"
 	"log"
