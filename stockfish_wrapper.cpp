@@ -48,11 +48,29 @@ extern "C"
 		CloseHandle(hChildStdoutWr);
 		CloseHandle(hChildStdinRd);
 
-		// Write commands to Stockfish
-		std::string stockfish_command = "uci\nposition fen " + std::string(fen) + "\ngo depth 15\n";
-		DWORD written;
-		WriteFile(hChildStdinWr, stockfish_command.c_str(), stockfish_command.size(), &written, NULL);
-		CloseHandle(hChildStdinWr); // Close the write end after sending commands
+		// Write commands to Stockfish line by line
+		std::string commands[] = {
+			"uci\n",								   // Initialize Stockfish
+			"isready\n",							   // Wait for "readyok"
+			"ucinewgame\n",							   // Start a new game
+			"position fen " + std::string(fen) + "\n", // Set the position using FEN
+			"go depth 15\n"							   // Start calculating best move
+		};
+
+		for (const auto &cmd : commands)
+		{
+			DWORD written;
+			if (!WriteFile(hChildStdinWr, cmd.c_str(), cmd.size(), &written, NULL))
+			{
+				perror("WriteFile failed\n");
+				return "error";
+			}
+			std::cout << "Sending command: " << cmd << std::endl;
+
+			// Add delays if necessary to ensure Stockfish processes commands
+			Sleep(100);
+		}
+		CloseHandle(hChildStdinWr); // Close the input pipe after sending all commands
 
 		// Read output from Stockfish
 		char buffer[1024];
@@ -61,7 +79,7 @@ extern "C"
 		{
 			buffer[bytesRead] = '\0';
 			output += buffer;
-
+			std::cout << buffer;
 			if (output.find("bestmove") != std::string::npos)
 				break;
 		}
@@ -86,15 +104,8 @@ extern "C"
 
 int main()
 {
-	const char *fen = "r2qkb1r/ppp2ppp/2n1pn2/3p1bB1/2PP4/2N1PN2/PP3PPP/R2QKB1R w KQkq - 0 1";
+	const char *fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	const char *result = evaluate_position(fen);
-	std::cout << "Stockfish result: " << result << std::endl;
+	std::cout << "Minhdz result: " << result << std::endl;
 	return 0;
 }
-
-// #include "stockfish_wrapper.h"
-
-// extern "C" const char *evaluate_position(const char *fen)
-// {
-// 	return "bestmove e2e4 eval +1.23";
-// }

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"unsafe"
 )
 
@@ -29,12 +30,32 @@ func callStockfish(fen string) (string, string) {
 	cFEN := C.CString(fen)
 	defer C.free(unsafe.Pointer(cFEN))
 
+	// Call the C++ function
 	result := C.GoString(C.evaluate_position(cFEN))
+	fmt.Println("Raw result from Stockfish:", result)
 
-	var bestMove, evaluation string
-	n, err := fmt.Sscanf(result, "bestmove %s eval %s", &bestMove, &evaluation)
-	if err != nil || n != 2 {
-		bestMove, evaluation = "unknown", "unknown"
+	// Initialize default values
+	bestMove := "unknown"
+	evaluation := "unknown"
+
+	// Extract "bestmove" and "evaluation" using simple parsing
+	lines := strings.Split(result, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "bestmove") {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				bestMove = parts[1] // The move after "bestmove"
+			}
+			break
+		} else if strings.HasPrefix(line, "info") && strings.Contains(line, "score") {
+			parts := strings.Fields(line)
+			for i := 0; i < len(parts); i++ {
+				if parts[i] == "score" && i+1 < len(parts) {
+					evaluation = parts[i+1] + " " + parts[i+2] // e.g., "cp 28" or "mate 3"
+					break
+				}
+			}
+		}
 	}
 
 	return evaluation, bestMove
