@@ -83,6 +83,7 @@ func evaluateHandler(c *gin.Context) {
 func main() {
 	r := gin.Default()
 	r.POST("/evaluate", evaluateHandler)
+	r.POST("/compare-moves", compareMovesHandler)
 	log.Println("Server running on port 8080")
 	r.Run(":8080")
 }

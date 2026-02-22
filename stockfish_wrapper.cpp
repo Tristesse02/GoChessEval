@@ -97,10 +97,3 @@ extern "C"
 	}
 }
 
-int main()
-{
-	const char *fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-	const char *result = evaluate_position(fen);
-	std::cout << "Minhdz result: " << result << std::endl;
-	return 0;
-}
