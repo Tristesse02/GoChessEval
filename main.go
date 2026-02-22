@@ -9,12 +9,12 @@ package main
 import "C"
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"strings"
 	"unsafe"
+
+	"github.com/gin-gonic/gin"
 )
 
 type EvaluateRequest struct {
@@ -38,20 +38,24 @@ func callStockfish(fen string) (string, string) {
 	bestMove := "unknown"
 	evaluation := "unknown"
 
+	// Normalize Windows line endings
+	result = strings.ReplaceAll(result, "\r\n", "\n")
+
 	// Extract "bestmove" and "evaluation" using simple parsing
+	// We keep updating evaluation so the last info line (deepest depth) wins
 	lines := strings.Split(result, "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "bestmove") {
 			parts := strings.Fields(line)
 			if len(parts) >= 2 {
-				bestMove = parts[1] // The move after "bestmove"
+				bestMove = parts[1]
 			}
 			break
 		} else if strings.HasPrefix(line, "info") && strings.Contains(line, "score") {
 			parts := strings.Fields(line)
-			for i := 0; i < len(parts); i++ {
-				if parts[i] == "score" && i+1 < len(parts) {
-					evaluation = parts[i+1] + " " + parts[i+2] // e.g., "cp 28" or "mate 3"
+			for i := 0; i < len(parts)-2; i++ {
+				if parts[i] == "score" {
+					evaluation = parts[i+1] + " " + parts[i+2]
 					break
 				}
 			}
@@ -61,31 +65,24 @@ func callStockfish(fen string) (string, string) {
 	return evaluation, bestMove
 }
 
-func evaluateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
+func evaluateHandler(c *gin.Context) {
 	var req EvaluateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	evaluation, bestMove := callStockfish(req.FEN)
 
-	response := EvaluateResponse{
+	c.JSON(200, EvaluateResponse{
 		Evaluation: evaluation,
 		BestMove:   bestMove,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func main() {
-	http.HandleFunc("/evaluate", evaluateHandler)
+	r := gin.Default()
+	r.POST("/evaluate", evaluateHandler)
 	log.Println("Server running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	r.Run(":8080")
 }

@@ -88,12 +88,7 @@ extern "C"
 		CloseHandle(piProcInfo.hProcess);
 		CloseHandle(piProcInfo.hThread);
 
-		size_t pos = output.find("bestmove");
-		if (pos != std::string::npos)
-		{
-			output = output.substr(pos); // Extract the line with "bestmove"
-		}
-		else
+		if (output.find("bestmove") == std::string::npos)
 		{
 			output = "no best move found";
 		}
